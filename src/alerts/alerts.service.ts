@@ -123,7 +123,7 @@ export class AlertsService {
   }
 
   private async sendAlertEmail(email: string, cuit: string, status: any, alertId: string) {
-    const unsubscribeUrl = `http://localhost:3001/alerts/unsubscribe/${alertId}`; // Should be config driven
+    const unsubscribeUrl = `${process.env.THIS_APP_URL}/unsubscribe/${alertId}`; // Should be config driven
     
     // Simplistic HTML template replicating the front's feel
     const entitiesHtml = status.entidades?.map((ent: any) => `
