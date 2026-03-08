@@ -55,16 +55,16 @@ export class AlertsService {
     return { message: 'Unsubscribed successfully' };
   }
 
-  @Cron(CronExpression.EVERY_DAY_AT_9AM)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async handleCron() {
     this.logger.log('Starting weekly CUIT status check...');
     const alerts = await this.alertRepository.find();
-    console.log(alerts);
-
+   
     for (const alert of alerts) {
       try {
         const currentStatus = await this.fetchBCRAStatus(alert.cuit);
         if (this.hasStatusChanged(alert.lastStatus, currentStatus)) {
+          
           this.logger.log(`Status changed for ${alert.email} / CUIT ${alert.cuit}`);
           await this.sendAlertEmail(alert.email, alert.cuit, currentStatus, alert.id);
           
@@ -123,14 +123,14 @@ export class AlertsService {
   }
 
   private async sendAlertEmail(email: string, cuit: string, status: any, alertId: string) {
-    const unsubscribeUrl = `${process.env.THIS_APP_URL}/unsubscribe/${alertId}`; // Should be config driven
+    const unsubscribeUrl = `${process.env.THIS_APP_URL}/alerts/unsubscribe/${alertId}`; // Should be config driven
     
     // Simplistic HTML template replicating the front's feel
     const entitiesHtml = status.entidades?.map((ent: any) => `
       <div style="border-bottom: 1px solid #e2e8f0; padding: 10px 0;">
         <strong>${ent.entidad}</strong><br>
         Situación: <span style="color: ${ent.situacion > 1 ? '#ef4444' : '#10b981'}">${ent.situacion}</span> | 
-        Monto: $${ent.monto}
+        Monto: $${ent.monto*1000}
       </div>
     `).join('') || '<p>No hay datos de entidades disponibles.</p>';
 
