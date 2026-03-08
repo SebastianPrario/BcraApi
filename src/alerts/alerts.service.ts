@@ -55,7 +55,7 @@ export class AlertsService {
     return { message: 'Unsubscribed successfully' };
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_WEEK)
   async handleCron() {
     this.logger.log('Starting weekly CUIT status check...');
     const alerts = await this.alertRepository.find();
@@ -78,9 +78,10 @@ export class AlertsService {
     }
   }
 
-  private async fetchBCRAStatus(cuit: string) {
+  private async fetchBCRAStatus(cuit: any) {
     try {
-      const cuitLimpio = cuit.replace(/[-\s]/g, "");
+      const cuitStr = String(cuit);
+      const cuitLimpio = cuitStr.replace(/[-\s]/g, "");
       const response = await axios.get(`https://api.bcra.gob.ar/CentralDeDeudores/V1.0/Deudas/${cuitLimpio}`);
       
       const results = response.data.results;
