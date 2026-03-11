@@ -7,6 +7,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AlertsModule } from './alerts/alerts.module';
 import { Alert } from './alerts/entities/alert.entity';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { User } from './users/entities/user.entity';
+import { UserCuit } from './users/entities/user-cuit.entity';
 
 @Module({
   imports: [
@@ -19,7 +23,7 @@ import { Alert } from './alerts/entities/alert.entity';
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
         url: configService.get<string>('DATABASE_URL'),
-        entities: [Alert],
+        entities: [Alert, User, UserCuit],
         synchronize: true, // Only for development
       }),
     }),
@@ -43,6 +47,8 @@ import { Alert } from './alerts/entities/alert.entity';
       }),
     }),
     AlertsModule,
+    UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
