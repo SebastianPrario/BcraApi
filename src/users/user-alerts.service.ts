@@ -19,7 +19,7 @@ export class UserAlertsService {
     private mailerService: MailerService,
   ) {}
 
-  @Cron(CronExpression.EVERY_WEEK)
+  //@Cron(CronExpression.EVERY_30_MINUTES)
   async handleCron() {
     this.logger.log('Starting weekly Registered User CUIT check...');
     const cuits = await this.userCuitRepository.find({ relations: ['user'] });

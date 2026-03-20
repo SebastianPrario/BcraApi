@@ -15,6 +15,15 @@ export class UsersService {
   ) {}
 
   async create(userData: Partial<User>) {
+    if (userData.name) {
+      userData.name = userData.name.toUpperCase();
+    }
+
+    const existingName = await this.usersRepository.findOne({ where: { name: userData.name } });
+    if (existingName) {
+      throw new ConflictException('Name already exists');
+    }
+
     const existingUser = await this.usersRepository.findOne({ where: { email: userData.email } });
     if (existingUser) {
       throw new ConflictException('Email already exists');
@@ -34,6 +43,21 @@ export class UsersService {
 
   async findByEmail(email: string) {
     return this.usersRepository.findOne({ where: { email }, relations: ['cuits'] });
+  }
+
+  async findByName(name: string) {
+    if (!name) return null;
+    return this.usersRepository.findOne({ where: { name: name.toUpperCase() }, relations: ['cuits'] });
+  }
+
+  async updateEmail(userId: string, newEmail: string) {
+    const user = await this.findById(userId);
+    const existingUser = await this.usersRepository.findOne({ where: { email: newEmail } });
+    if (existingUser && existingUser.id !== userId) {
+      throw new ConflictException('Email already in use');
+    }
+    user.email = newEmail;
+    return this.usersRepository.save(user);
   }
 
   async findById(id: string) {
