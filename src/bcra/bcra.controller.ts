@@ -8,6 +8,7 @@ export class BcraController {
   @Get('status/:cuit')
   async getStatus(@Param('cuit') cuit: string) {
     const status = await this.bcraService.fetchBCRAStatus(cuit);
+    console.log(status);
     if (!status) {
       throw new NotFoundException(`No se encontró información para el CUIT: ${cuit}`);
     }
