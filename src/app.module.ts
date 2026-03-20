@@ -7,6 +7,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AlertsModule } from './alerts/alerts.module';
 import { Alert } from './alerts/entities/alert.entity';
+import { BcraModule } from './bcra/bcra.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { Alert } from './alerts/entities/alert.entity';
       }),
     }),
     AlertsModule,
+    BcraModule,
   ],
   controllers: [AppController],
   providers: [AppService],
