@@ -12,7 +12,7 @@ export class BcraService {
     timeout: 30000 
   });
 
-  async fetchWithRetry(url: string, retries = 2, delay = 1500): Promise<any> {
+  async fetchWithRetry(url: string, retries = 2, delay = 150): Promise<any> {
     for (let i = 0; i <= retries; i++) {
       try {
         const response = await axios.get(url, {
