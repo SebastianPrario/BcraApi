@@ -1,26 +1,21 @@
-import { Controller, Get, Param, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Param, NotFoundException, UseInterceptors, UseFilters } from '@nestjs/common';
 import { BcraService } from './bcra.service';
+import { CuitValidatorInterceptor } from './interceptors/cuit-validator.interceptor';
+import { BcraExceptionFilter } from './filters/bcra-exception.filter';
 
 @Controller('bcra')
+@UseInterceptors(CuitValidatorInterceptor)
+@UseFilters(BcraExceptionFilter)
 export class BcraController {
   constructor(private readonly bcraService: BcraService) {}
 
   @Get('status/:cuit')
   async getStatus(@Param('cuit') cuit: string) {
-    const status = await this.bcraService.fetchBCRAStatus(cuit);
-    console.log(status);
-    if (!status) {
-      throw new NotFoundException(`No se encontró información para el CUIT: ${cuit}`);
-    }
-    return status;
+    return await this.bcraService.fetchBCRAStatus(cuit);
   }
 
   @Get('cheques/:cuit')
   async getCheques(@Param('cuit') cuit: string) {
-    const cheques = await this.bcraService.fetchBCRACheques(cuit);
-    if (!cheques) {
-      throw new NotFoundException(`No se encontró información de cheques para el CUIT: ${cuit}`);
-    }
-    return cheques;
+    return await this.bcraService.fetchBCRACheques(cuit);
   }
 }

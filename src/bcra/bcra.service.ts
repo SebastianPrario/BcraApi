@@ -12,28 +12,48 @@ export class BcraService {
 
   private httpsAgent = new https.Agent({ 
     keepAlive: false,
-    timeout: 30000 
+    maxSockets: 5,
+    timeout: 30000,
+    rejectUnauthorized: false
   });
-
-  async fetchWithRetry(url: string, retries = 3, delay = 500): Promise<any> {
+  
+  async fetchWithRetry(url: string, retries = 3, delay = 1000): Promise<any> {
     for (let i = 0; i <= retries; i++) {
+
       try {
-        return await axios.get(url, {
-          headers: {
-            'Accept': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            'Accept-Encoding': 'identity',
-          },
+        return await axios.get(url, 
+          {
           httpsAgent: this.httpsAgent,
           timeout: 20000,
-        });
+          headers: {
+            'User-Agent': 'curl/8.5.0',
+            'Accept': '*/*',
+            'Connection': 'close'
+          }
+        }
+      );
       } catch (err: any) {
-        if (err.response?.status === 404) throw err;
+        const status = err.response?.status;
+        if (status === 404) throw err;
 
-        const isRetryable = !err.response || err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT';
-        if (i === retries || !isRetryable) throw err;
+        const isRateLimit = status === 429;
+        const isRetryable = !err.response || isRateLimit || err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT';
+        
+        if (i === retries || !isRetryable) {
+          this.logger.error(`Fallo final en ${url}  tras ${i} reintentos: ${err.message}`);
+          throw err;
+        }
 
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        // Si es 429 (Too Many Requests), esperar más tiempo
+        let waitTime = isRateLimit ? delay * 4 : delay;
+        
+        // Jitter: añadir variabilidad aleatoria (+/- 20%) para evitar sincronización
+        const jitter = waitTime * 0.2 * (Math.random() * 2 - 1);
+        waitTime = Math.max(100, waitTime + jitter);
+
+        this.logger.warn(`Reintento ${i + 1}/${retries} en ${waitTime.toFixed(0)}ms: ${err.message}`);
+        
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
         delay *= 2;
       }
     }
@@ -80,9 +100,10 @@ export class BcraService {
   async fetchBCRACheques(cuitLimpio: string) {
     try {
       const response = await this.fetchWithRetry(`${process.env.API_URL_CHEQUESRECHAZADOS}${cuitLimpio}`);
-      return response?.data?.results || null;
+      return response?.data?.results || [];
     } catch (error: any) {
-      if (error.response?.status === 404) return null;
+      // Un 404 en cheques significa que el CUIT no tiene cheques rechazados.
+      if (error.response?.status === 404) return [];
       throw error;
     }
   }
