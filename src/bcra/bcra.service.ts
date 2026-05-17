@@ -5,18 +5,14 @@ import * as https from 'https';
 @Injectable()
 export class BcraService {
   private readonly logger = new Logger(BcraService.name);
-  
-  // Cache simple en memoria: CUIT -> { data, timestamp }
-  private cache = new Map<string, { data: any, timestamp: number }>();
-  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
-  private httpsAgent = new https.Agent({ 
+  private httpsAgent = new https.Agent({
     keepAlive: false,
     maxSockets: 5,
     timeout: 30000,
     rejectUnauthorized: false
   });
-  
+
   async fetchWithRetry(url: string, retries = 3, delay = 1000): Promise<any> {
     for (let i = 0; i <= retries; i++) {
 
@@ -61,29 +57,17 @@ export class BcraService {
 
   async getFullReport(cuit: string) {
     const cuitLimpio = cuit.replace(/[-\s]/g, '');
-    
-    // 1. Verificar Caché
-    const cached = this.cache.get(cuitLimpio);
-    if (cached && (Date.now() - cached.timestamp < this.CACHE_TTL)) {
-      return cached.data;
-    }
 
     try {
-      // 2. Ejecutar ambas peticiones en paralelo
       const [status, cheques] = await Promise.all([
         this.fetchBCRAStatus(cuitLimpio),
         this.fetchBCRACheques(cuitLimpio)
       ]);
 
-      const result = { status, cheques };
-      
-      // 3. Guardar en caché
-      this.cache.set(cuitLimpio, { data: result, timestamp: Date.now() });
-      
-      return result;
+      return { status, cheques };
     } catch (error) {
-       this.logger.error(`Error en reporte completo CUIT ${cuit}: ${error.message}`);
-       throw new ServiceUnavailableException('El BCRA está tardando demasiado en responder. Intente de nuevo en unos segundos.');
+      this.logger.error(`Error en reporte completo CUIT ${cuit}: ${error.message}`);
+      throw new ServiceUnavailableException('El BCRA está tardando demasiado en responder. Intente de nuevo en unos segundos.');
     }
   }
 

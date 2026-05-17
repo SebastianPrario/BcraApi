@@ -1,4 +1,5 @@
 import { Controller, Get, Param, NotFoundException, UseInterceptors, UseFilters } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { BcraService } from './bcra.service';
 import { CuitValidatorInterceptor } from './interceptors/cuit-validator.interceptor';
 import { BcraExceptionFilter } from './filters/bcra-exception.filter';
@@ -6,6 +7,7 @@ import { BcraExceptionFilter } from './filters/bcra-exception.filter';
 @Controller('bcra')
 @UseInterceptors(CuitValidatorInterceptor)
 @UseFilters(BcraExceptionFilter)
+@Throttle({ default: { limit: 10, ttl: 60_000 } })
 export class BcraController {
   constructor(private readonly bcraService: BcraService) {}
 
