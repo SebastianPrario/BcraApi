@@ -20,4 +20,9 @@ export class BcraController {
   async getCheques(@Param('cuit') cuit: string) {
     return await this.bcraService.fetchBCRACheques(cuit);
   }
+
+  @Get(':cuit')
+  async getFullReport(@Param('cuit') cuit: string) {
+    return await this.bcraService.getFullReport(cuit);
+  }
 }
